@@ -12,28 +12,63 @@ from services.weather_service import (
     WeatherProviderError
 )
 
-app = FastAPI(title="Quick Weather")
+
+app = FastAPI(title="Weather API")
 
 
+# Dependency injection
 def get_weather_service() -> WeatherService:
     return WeatherService()
 
+
+# --------------------------------------------------
+# Root
+# --------------------------------------------------
 
 @app.get("/")
 async def root():
     return {"message": "Weather API is running"}
 
 
-# Browser GPS page
+# --------------------------------------------------
+# Weather web pages
+# --------------------------------------------------
+
 @app.get("/weather", include_in_schema=False)
+@app.get("/weather/", include_in_schema=False)
 async def weather_page():
-    return FileResponse(
-        FilePath("wwwroot/weather.html")
-    )
+    return FileResponse(FilePath("wwwroot/weather.html"))
 
 
-# GPS-coordinate weather endpoint
-@app.get("/api/weather/location", response_model=WeatherResponse)
+@app.get("/weather/{zip_code}", include_in_schema=False)
+async def weather_page_by_zip(
+    zip_code: str
+):
+    if not zip_code.isdigit() or len(zip_code) != 5:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid ZIP code"
+        )
+
+    return FileResponse(FilePath("wwwroot/weather.html"))
+
+
+# --------------------------------------------------
+# GPS weather API
+# --------------------------------------------------
+
+# The first route is used by Windows.
+# The second route is available directly through Nginx
+# after it removes the /weather prefix.
+
+@app.get(
+    "/weather/api/weather/location",
+    response_model=WeatherResponse
+)
+@app.get(
+    "/api/weather/location",
+    response_model=WeatherResponse
+)
 async def get_weather_by_coordinates(
     latitude: Annotated[float, Query(ge=-90, le=90)],
     longitude: Annotated[float, Query(ge=-180, le=180)],
@@ -49,27 +84,33 @@ async def get_weather_by_coordinates(
         )
 
     except LocationNotFoundError as ex:
-        raise HTTPException(status_code=404, detail=str(ex))
-
-    except WeatherProviderError as ex:
-        raise HTTPException(status_code=502, detail=str(ex))
-
-
-# Browser ZIP-code weather page
-@app.get("/weather/{zip_code}", include_in_schema=False)
-async def weather_page_by_zip(zip_code: str):
-    if not zip_code.isdigit() or len(zip_code) != 5:
         raise HTTPException(
-            status_code=400,
-            detail="Invalid ZIP code"
+            status_code=404,
+            detail=str(ex)
         )
 
-    return FileResponse(
-        FilePath("wwwroot/weather.html")
-    )
+    except WeatherProviderError as ex:
+        raise HTTPException(
+            status_code=502,
+            detail=str(ex)
+        )
 
-# ZIP-code weather endpoint
-@app.get("/api/weather/{zip_code}", response_model=WeatherResponse)
+
+# --------------------------------------------------
+# ZIP-code weather API
+# --------------------------------------------------
+
+# Keep this after the GPS endpoint so the literal
+# "location" path is not interpreted as a ZIP code.
+
+@app.get(
+    "/weather/api/weather/{zip_code}",
+    response_model=WeatherResponse
+)
+@app.get(
+    "/api/weather/{zip_code}",
+    response_model=WeatherResponse
+)
 async def get_weather_by_zip(
     zip_code: Annotated[
         str,
@@ -84,7 +125,13 @@ async def get_weather_by_zip(
         return await weather_service.get_weather(zip_code)
 
     except LocationNotFoundError as ex:
-        raise HTTPException(status_code=404, detail=str(ex))
+        raise HTTPException(
+            status_code=404,
+            detail=str(ex)
+        )
 
     except WeatherProviderError as ex:
-        raise HTTPException(status_code=502, detail=str(ex))
+        raise HTTPException(
+            status_code=502,
+            detail=str(ex)
+        )

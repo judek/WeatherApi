@@ -4,78 +4,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Quick Weather</title>
+    <title>Weather</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            background: #f2f6fa;
-            color: #263238;
+            background: #eef2f5;
             margin: 0;
-            padding: 30px 15px;
+            padding: 20px;
+            color: #333;
         }
 
         .container {
-            max-width: 600px;
-            margin: 0 auto;
+            max-width: 650px;
+            margin: 30px auto;
         }
 
-        .weather-card {
+        .card {
             background: white;
-            border-radius: 14px;
+            border-radius: 12px;
             padding: 25px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 25px;
+            margin-top: 0;
         }
 
         h2 {
             margin-bottom: 5px;
         }
 
+        .location {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .coordinates {
+            font-size: 13px;
+            color: #777;
+            margin-top: 5px;
+        }
+
         .temperature {
-            font-size: 56px;
+            font-size: 64px;
             font-weight: bold;
+            text-align: center;
             margin: 15px 0 5px;
         }
 
         .description {
-            font-size: 19px;
-            color: #526575;
+            text-align: center;
+            font-size: 20px;
+            color: #555;
             margin-bottom: 25px;
         }
 
-        .weather-details {
+        .details {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
         }
 
         .detail {
-            background: #f2f6fa;
+            background: #f5f7f9;
             padding: 15px;
-            border-radius: 9px;
+            border-radius: 8px;
         }
 
         .detail-label {
+            color: #777;
             font-size: 13px;
-            color: #607080;
             margin-bottom: 6px;
         }
 
         .detail-value {
-            font-size: 19px;
+            font-size: 18px;
             font-weight: bold;
-        }
-
-        .status {
-            text-align: center;
-            color: #526575;
-            margin: 20px 0;
         }
 
         .search {
@@ -88,8 +98,8 @@
             flex: 1;
             min-width: 0;
             padding: 12px;
-            border: 1px solid #ccd5df;
-            border-radius: 7px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             font-size: 16px;
         }
 
@@ -98,13 +108,61 @@
             background: #1976d2;
             color: white;
             border: none;
-            border-radius: 7px;
-            font-size: 15px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 15px;
         }
 
         .search button:hover {
-            background: #125da8;
+            background: #125ca1;
+        }
+
+        .status {
+            text-align: center;
+            color: #666;
+            margin: 15px 0;
+        }
+
+        .error {
+            color: #c62828;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                margin: 10px auto;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .temperature {
+                font-size: 54px;
+            }
+
+            .details {
+                gap: 8px;
+            }
+
+            .detail {
+                padding: 12px;
+            }
+
+            .detail-value {
+                font-size: 16px;
+            }
+
+            .search button {
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -112,38 +170,36 @@
 <body>
 
 <div class="container">
+    <div class="card">
 
-    <h1>Local Weather</h1>
+        <h1>Weather</h1>
 
-    <div class="search">
-        <input
-            type="text"
-            id="zipCode"
-            placeholder="Enter ZIP code"
-            maxlength="5"
-            inputmode="numeric"
-        >
+        <form class="search" id="searchForm">
+            <input
+                type="text"
+                id="zipCodeInput"
+                placeholder="Enter ZIP code"
+                maxlength="5"
+                inputmode="numeric"
+            >
+            <button type="submit">Search</button>
+        </form>
 
-        <button onclick="searchByZip()">Search</button>
-    </div>
+        <div id="status" class="status">
+            Getting weather...
+        </div>
 
-    <div class="weather-card">
+        <div id="weather" class="hidden">
 
-        <p id="status" class="status">
-            Requesting your location...
-        </p>
-
-        <div id="weather" style="display:none;">
-
-            <h2 id="location"></h2>
+            <div class="location">
+                <h2 id="location"></h2>
+                <div id="coordinates" class="coordinates"></div>
+            </div>
 
             <div id="temperature" class="temperature"></div>
-
-            <div id="coordinates" class="detail-label"></div>
-
             <div id="description" class="description"></div>
 
-            <div class="weather-details">
+            <div class="details">
 
                 <div class="detail">
                     <div class="detail-label">Feels Like</div>
@@ -166,6 +222,16 @@
                 </div>
 
                 <div class="detail">
+                    <div class="detail-label">Wind Direction</div>
+                    <div id="windDirection" class="detail-value"></div>
+                </div>
+
+                <div class="detail">
+                    <div class="detail-label">Wind Gusts</div>
+                    <div id="windGusts" class="detail-value"></div>
+                </div>
+
+                <div class="detail">
                     <div class="detail-label">Today's High</div>
                     <div id="highTemperature" class="detail-value"></div>
                 </div>
@@ -176,48 +242,42 @@
                 </div>
 
                 <div class="detail">
-                    <div class="detail-label">Wind Gusts</div>
-                    <div id="windGusts" class="detail-value"></div>
-                </div>
-
-                <div class="detail">
                     <div class="detail-label">Precipitation Chance</div>
                     <div id="precipitation" class="detail-value"></div>
                 </div>
 
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
+    // Determine the application base path.
+    // Works locally at /weather/ and in production at /weather/.
+    const pathParts = window.location.pathname
+        .split("/")
+        .filter(part => part.length > 0);
+
+    const appBase = "/" + (pathParts[0] || "weather");
+
+    // API endpoints are relative to the application base path.
+    const apiBase = `${appBase}/api/weather`;
 
     const statusElement = document.getElementById("status");
     const weatherElement = document.getElementById("weather");
 
-    // Determine whether the page was opened with a ZIP code.
-    const pathParts = window.location.pathname.split("/");
-    const zipCode = pathParts.length > 2 ? pathParts[2] : null;
+    function showStatus(message, isError = false) {
+        statusElement.textContent = message;
+        statusElement.className = isError
+            ? "status error"
+            : "status";
 
-    // Display weather returned by either API endpoint.
+        statusElement.classList.remove("hidden");
+    }
+
     function displayWeather(data) {
-
-        statusElement.textContent = "";
-        weatherElement.style.display = "block";
-
         document.getElementById("location").textContent =
             data.location;
-
-        const coordinatesElement =
-            document.getElementById("coordinates");
-
-        if (data.latitude !== undefined && data.longitude !== undefined) {
-            coordinatesElement.textContent =
-                `GPS: ${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}`;
-        } else {
-            coordinatesElement.textContent = "";
-        }            
 
         document.getElementById("temperature").textContent =
             `${Math.round(data.temperature)}°F`;
@@ -235,7 +295,13 @@
             `${data.cloud_cover}%`;
 
         document.getElementById("windSpeed").textContent =
-            `${Math.round(data.wind_speed)} mph`;
+            `${data.wind_speed} mph`;
+
+        document.getElementById("windDirection").textContent =
+            `${data.wind_direction}°`;
+
+        document.getElementById("windGusts").textContent =
+            `${data.wind_gusts} mph`;
 
         document.getElementById("highTemperature").textContent =
             `${Math.round(data.high_temperature)}°F`;
@@ -243,33 +309,39 @@
         document.getElementById("lowTemperature").textContent =
             `${Math.round(data.low_temperature)}°F`;
 
-        document.getElementById("windGusts").textContent =
-            `${Math.round(data.wind_gusts)} mph`;
-
         document.getElementById("precipitation").textContent =
             `${data.precipitation_probability}%`;
+
+        const coordinatesElement =
+            document.getElementById("coordinates");
+
+        if (
+            data.latitude !== undefined &&
+            data.longitude !== undefined
+        ) {
+            coordinatesElement.textContent =
+                `GPS: ${data.latitude.toFixed(5)}, ${data.longitude.toFixed(5)}`;
+        } else {
+            coordinatesElement.textContent = "";
+        }
+
+        weatherElement.classList.remove("hidden");
+        statusElement.classList.add("hidden");
     }
 
-    // Retrieve weather using a ZIP code.
     async function getWeatherByZip(zipCode) {
-
-        statusElement.textContent = "Retrieving weather...";
-        weatherElement.style.display = "none";
+        showStatus("Getting weather...");
 
         try {
-
             const response = await fetch(
-                `/api/weather/${encodeURIComponent(zipCode)}`
+                `${apiBase}/${encodeURIComponent(zipCode)}`
             );
 
-           if (!response.ok) {
+            if (!response.ok) {
                 const error = await response.json();
-
-                const message = typeof error.detail === "string"
-                    ? error.detail
-                    : JSON.stringify(error.detail || error);
-
-                throw new Error(`HTTP ${response.status}: ${message}`);
+                throw new Error(
+                    error.detail || "Unable to retrieve weather."
+                );
             }
 
             const data = await response.json();
@@ -277,136 +349,122 @@
             displayWeather(data);
 
         } catch (error) {
-
-            statusElement.textContent =
-                `Unable to retrieve weather: ${error.message}`;
+            showStatus(error.message, true);
+            weatherElement.classList.add("hidden");
         }
     }
 
-    // Retrieve weather using GPS coordinates.
     async function getWeather(latitude, longitude) {
-
-        statusElement.textContent = "Retrieving weather...";
-        weatherElement.style.display = "none";
+        showStatus("Getting weather for your location...");
 
         try {
-
             const response = await fetch(
-                `/api/weather/location?latitude=${latitude}&longitude=${longitude}`
+                `${apiBase}/location?latitude=${latitude}&longitude=${longitude}`
             );
 
-          if (!response.ok) {
-            const error = await response.json();
-
-            const message = typeof error.detail === "string"
-                ? error.detail
-                : JSON.stringify(error.detail || error);
-
-            throw new Error(`HTTP ${response.status}: ${message}`);
-        }
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(
+                    error.detail || "Unable to retrieve weather."
+                );
+            }
 
             const data = await response.json();
 
+            // Include the coordinates supplied by the browser.
             data.latitude = latitude;
-            data.longitude = longitude
+            data.longitude = longitude;
 
             displayWeather(data);
 
         } catch (error) {
-
-            statusElement.textContent =
-                `Unable to retrieve weather: ${error.message}`;
+            showStatus(error.message, true);
+            weatherElement.classList.add("hidden");
         }
     }
 
-    // Search button handler.
-    function searchByZip() {
-
-        const zip = document.getElementById("zipCode").value.trim();
-
-        if (!/^[0-9]{5}$/.test(zip)) {
-            statusElement.textContent =
-                "Please enter a valid five-digit ZIP code.";
+    function searchByZip(zipCode) {
+        if (!/^\d{5}$/.test(zipCode)) {
+            showStatus("Please enter a valid five-digit ZIP code.", true);
             return;
         }
 
-        getWeatherByZip(zip);
+        // Navigate to the ZIP-specific page.
+        window.location.href = `${appBase}/${zipCode}`;
     }
 
-    // Request the browser's GPS location.
     function requestGpsLocation() {
-
-        if ("geolocation" in navigator) {
-
-            statusElement.textContent =
-                "Requesting your location...";
-
-            navigator.geolocation.getCurrentPosition(
-
-                position => {
-                    getWeather(
-                        position.coords.latitude,
-                        position.coords.longitude
-                    );
-                },
-
-                handleLocationError,
-
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 300000
-                }
+        if (!navigator.geolocation) {
+            showStatus(
+                "Your browser does not support GPS location.",
+                true
             );
-
-        } else {
-
-            statusElement.textContent =
-                "Your browser does not support GPS location.";
+            return;
         }
+
+        showStatus("Getting your GPS location...");
+
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                getWeather(
+                    position.coords.latitude,
+                    position.coords.longitude
+                );
+            },
+            handleLocationError,
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 300000
+            }
+        );
     }
 
-    // Handle GPS errors.
     function handleLocationError(error) {
+        let message;
 
         switch (error.code) {
-
             case error.PERMISSION_DENIED:
-                statusElement.textContent =
-                    "Location permission was denied.";
+                message = "Location permission was denied.";
                 break;
 
             case error.POSITION_UNAVAILABLE:
-                statusElement.textContent =
-                    "Location information is unavailable.";
+                message = "Your location is unavailable.";
                 break;
 
             case error.TIMEOUT:
-                statusElement.textContent =
-                    "Location request timed out.";
+                message = "GPS location request timed out.";
                 break;
 
             default:
-                statusElement.textContent =
-                    "Unable to determine your location.";
+                message = "Unable to determine your location.";
         }
+
+        showStatus(message, true);
     }
 
-    // Initial page startup.
+    document.getElementById("searchForm")
+        .addEventListener("submit", event => {
+            event.preventDefault();
+
+            const zipCode = document
+                .getElementById("zipCodeInput")
+                .value
+                .trim();
+
+            searchByZip(zipCode);
+        });
+
+    // Determine whether a ZIP code was included in the URL.
+    const zipCode = pathParts.length > 1
+        ? pathParts[1]
+        : null;
+
     if (zipCode) {
-
-        if (/^[0-9]{5}$/.test(zipCode)) {
-            document.getElementById("zipCode").value = zipCode;
-            getWeatherByZip(zipCode);
-        } else {
-            statusElement.textContent = "Invalid ZIP code.";
-        }
-
+        getWeatherByZip(zipCode);
     } else {
-
         requestGpsLocation();
     }
-
 </script>
 
 </body>

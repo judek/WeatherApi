@@ -254,13 +254,16 @@
 <script>
     // Determine the application base path.
     // Works locally at /weather/ and in production at /weather/.
-    const pathParts = window.location.pathname
-        .split("/")
-        .filter(part => part.length > 0);
+   const pathParts = window.location.pathname
+    .split("/")
+    .filter(part => part.length > 0);
 
-    const appBase = "/" + (pathParts[0] || "weather");
+    // Dedicated domain uses the root path.
+    // Local development and FollowMeGPS domain use /weather.
+    const appBase = pathParts.length === 0
+        ? ""
+        : "/" + pathParts[0];
 
-    // API endpoints are relative to the application base path.
     const apiBase = `${appBase}/api/weather`;
 
     const statusElement = document.getElementById("status");

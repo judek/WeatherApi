@@ -45,9 +45,16 @@
             margin-bottom: 20px;
         }
 
+        .address {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+            margin-top: 8px;
+        }
+
         .coordinates {
-            font-size: 13px;
-            color: #777;
+            font-size: 12px;
+            color: #888;
             margin-top: 5px;
         }
 
@@ -193,6 +200,7 @@
 
             <div class="location">
                 <h2 id="location"></h2>
+                <div id="address" class="address"></div>
                 <div id="coordinates" class="coordinates"></div>
             </div>
 
@@ -260,13 +268,9 @@
         .split("/")
         .filter(part => part.length > 0);
 
-    // A five-digit first path segment means this is a
-    // ZIP-code page on the dedicated QuickWeather domain.
     const isRootZip = pathParts.length > 0 &&
         /^\d{5}$/.test(pathParts[0]);
 
-    // Local development and FollowMeGPS use /weather.
-    // QuickWeather uses the domain root.
     const appBase = isRootZip || pathParts.length === 0
         ? ""
         : "/" + pathParts[0];
@@ -328,6 +332,23 @@
 
         document.getElementById("precipitation").textContent =
             `${data.precipitation_probability}%`;
+
+
+        // Display GPS address details when available.
+        const addressParts = [
+            [data.house_number, data.street]
+                .filter(Boolean)
+                .join(" "),
+            data.city,
+            data.county,
+            data.state,
+            data.postal_code,
+            data.country
+        ].filter(Boolean);
+
+        document.getElementById("address").textContent =
+            addressParts.join(", ");
+
 
         // Display GPS coordinates when available.
         const coordinatesElement =
@@ -401,7 +422,7 @@
 
             const data = await response.json();
 
-            // Include the coordinates supplied by the browser.
+            // Include coordinates supplied by the browser.
             data.latitude = latitude;
             data.longitude = longitude;
 
@@ -427,7 +448,6 @@
             return;
         }
 
-        // Navigate to the ZIP-specific page.
         window.location.href = `${appBase}/${zipCode}`;
     }
 
@@ -509,8 +529,6 @@
     // Application startup
     // --------------------------------------------------
 
-    // Root domain: /34655
-    // Path-based domain: /weather/34655
     const zipCode = isRootZip
         ? pathParts[0]
         : pathParts.length > 1

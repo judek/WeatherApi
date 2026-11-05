@@ -1,4 +1,7 @@
 
+import asyncio
+import time
+
 import httpx
 
 from models.weather import WeatherResponse
@@ -17,6 +20,13 @@ class WeatherProviderError(Exception):
 
 class WeatherService:
 
+    # Nominatim usage policy:
+    # Cache results and make no more than one request per second.
+    _geocode_cache = {}
+    _geocode_cache_ttl = 86400  # 24 hours
+    _geocode_lock = asyncio.Lock()
+    _last_geocode_request = 0.0
+
     def __init__(self):
         self.description_service = WeatherDescriptionService()
 
@@ -25,7 +35,7 @@ class WeatherService:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
 
-                # Convert ZIP code into geographic coordinates
+                # Convert ZIP code into geographic coordinates.
                 geocoding_response = await client.get(
                     "https://geocoding-api.open-meteo.com/v1/search",
                     params={
@@ -78,7 +88,6 @@ class WeatherService:
             async with httpx.AsyncClient(timeout=10.0) as client:
 
                 # GPS already provides the coordinates.
-                # No reverse geocoding is required.
                 location = Location(
                     name="GPS location",
                     latitude=latitude,
@@ -86,10 +95,31 @@ class WeatherService:
                     country=""
                 )
 
+                # Resolve GPS coordinates into a readable address.
+                # Weather lookup continues even if this fails.
+                address = await self._reverse_geocode(
+                    client,
+                    latitude,
+                    longitude
+                )
+
+                if address:
+                    location.name = (
+                        address.get("city")
+                        or address.get("town")
+                        or address.get("village")
+                        or address.get("suburb")
+                        or address.get("county")
+                        or "GPS location"
+                    )
+
+                    location.admin1 = address.get("state")
+
                 return await self._get_weather_for_location(
                     client,
                     location,
-                    None
+                    None,
+                    address
                 )
 
         except httpx.HTTPStatusError as ex:
@@ -103,14 +133,89 @@ class WeatherService:
                 f"Unable to connect to weather provider: {ex}"
             ) from ex
 
+    async def _reverse_geocode(
+        self,
+        client: httpx.AsyncClient,
+        latitude: float,
+        longitude: float
+    ) -> dict | None:
+
+        # Round coordinates to improve cache hits.
+        cache_key = (
+            round(latitude, 4),
+            round(longitude, 4)
+        )
+
+        cached = self._geocode_cache.get(cache_key)
+
+        if cached:
+            address, cached_at = cached
+
+            if time.monotonic() - cached_at < self._geocode_cache_ttl:
+                return address
+
+        async with self._geocode_lock:
+
+            # Check cache again after waiting for the lock.
+            cached = self._geocode_cache.get(cache_key)
+
+            if cached:
+                address, cached_at = cached
+
+                if time.monotonic() - cached_at < self._geocode_cache_ttl:
+                    return address
+
+            # Nominatim requires a maximum of one request per second.
+            elapsed = time.monotonic() - self._last_geocode_request
+            delay = 1.0 - elapsed
+
+            if delay > 0:
+                await asyncio.sleep(delay)
+
+            try:
+                self.__class__._last_geocode_request = time.monotonic()
+
+                response = await client.get(
+                    "https://nominatim.openstreetmap.org/reverse",
+                    params={
+                        "lat": latitude,
+                        "lon": longitude,
+                        "format": "jsonv2",
+                        "addressdetails": 1,
+                        "zoom": 18
+                    },
+                    headers={
+                        "User-Agent": "WeatherApi/1.0 (personal weather application)"
+                    }
+                )
+
+                response.raise_for_status()
+
+                data = response.json()
+                address = data.get("address", {})
+
+                self._geocode_cache[cache_key] = (
+                    address,
+                    time.monotonic()
+                )
+
+                return address
+
+            except (httpx.HTTPError, ValueError) as ex:
+                # Reverse geocoding is optional. Do not prevent
+                # the weather forecast from being returned.
+                print(f"Reverse geocoding failed: {ex}")
+                return None
+
     async def _get_weather_for_location(
         self,
         client: httpx.AsyncClient,
         location: Location,
-        zip_code: str | None
+        zip_code: str | None,
+        address: dict | None = None
     ) -> WeatherResponse:
 
-        # Retrieve current, hourly, and daily weather
+        # Retrieve current, hourly, and daily weather.
         weather_response = await client.get(
             "https://api.open-meteo.com/v1/forecast",
             params={
@@ -161,11 +266,33 @@ class WeatherService:
 
         return WeatherResponse(
             zip_code=zip_code or "",
+
             location=(
                 f"{location.name}, {location.admin1}"
                 if location.admin1
                 else location.name
             ),
+
+            # Reverse-geocoded address details.
+            street=(
+                address.get("road")
+                or address.get("pedestrian")
+                if address else None
+            ),
+            house_number=(
+                address.get("house_number") if address else None
+            ),
+            city=(
+                address.get("city")
+                or address.get("town")
+                or address.get("village")
+                or address.get("suburb")
+                if address else None
+            ),
+            county=address.get("county") if address else None,
+            state=address.get("state") if address else None,
+            postal_code=address.get("postcode") if address else None,
+            country=address.get("country") if address else None,
 
             temperature=current_weather.temperature,
             feels_like=current_weather.feels_like,

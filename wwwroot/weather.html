@@ -4,155 +4,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Weather</title>
 
     <style>
+        :root {
+            --background: #000000;
+            --surface: #16181c;
+            --surface-hover: #202327;
+            --border: #2f3336;
+            --text: #e7e9ea;
+            --muted: #71767b;
+            --blue: #1d9bf0;
+            --blue-hover: #1a8cd8;
+            --error: #f4212e;
+        }
+
         * {
             box-sizing: border-box;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: #eef2f5;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--text);
             margin: 0;
             padding: 20px;
-            color: #333;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 650px;
-            margin: 30px auto;
+            margin: 20px auto;
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
         }
 
-        h1 {
-            text-align: center;
-            margin-top: 0;
-        }
+        /* Header */
 
-        h2 {
-            margin-bottom: 5px;
-        }
-
-        .location {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .address {
-            font-size: 14px;
-            color: #555;
-            line-height: 1.5;
-            margin-top: 8px;
-        }
-
-        .coordinates {
-            font-size: 12px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .temperature {
-            font-size: 64px;
-            font-weight: bold;
-            text-align: center;
-            margin: 15px 0 5px;
-        }
-
-        .description {
-            text-align: center;
-            font-size: 20px;
-            color: #555;
-            margin-bottom: 25px;
-        }
-
-        .details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+        .header {
+            display: flex;
+            align-items: center;
             gap: 12px;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .detail {
-            background: #f5f7f9;
-            padding: 15px;
-            border-radius: 8px;
+        .logo {
+            width: 42px;
+            height: 42px;
+            background: var(--blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 23px;
         }
 
-        .detail-label {
-            color: #777;
-            font-size: 13px;
-            margin-bottom: 6px;
-        }
-
-        .detail-value {
-            font-size: 18px;
+        .header-title {
+            font-size: 20px;
             font-weight: bold;
         }
+
+        .header-subtitle {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        /* Search */
 
         .search {
             display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 10px;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
         }
 
         .search input {
             flex: 1;
             min-width: 0;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
+            padding: 13px 16px;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search input:focus {
+            border-color: var(--blue);
+        }
+
+        .search input::placeholder {
+            color: var(--muted);
         }
 
         .search button {
-            padding: 12px 18px;
-            background: #1976d2;
+            padding: 12px 22px;
+            background: var(--blue);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
             cursor: pointer;
-            font-size: 15px;
         }
 
         .search button:hover {
-            background: #125ca1;
+            background: var(--blue-hover);
         }
+
+        /* Status */
 
         .status {
             text-align: center;
-            color: #666;
-            margin: 15px 0;
+            color: var(--muted);
+            padding: 24px 15px;
+            font-size: 14px;
         }
 
         .error {
-            color: #c62828;
+            color: var(--error);
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
+
+        /* Current weather */
+
+        .current-weather {
+            padding: 25px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-label {
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1.2px;
+            margin-bottom: 12px;
+        }
+
+        .location {
+            margin-bottom: 22px;
+        }
+
+        .location h2 {
+            font-size: 25px;
+            margin: 0;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .address {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: 7px;
+        }
+
+        .coordinates {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .temperature-row {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .temperature {
+            font-size: 76px;
+            line-height: 1;
+            font-weight: bold;
+            letter-spacing: -4px;
+        }
+
+        .weather-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .description {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .feels-like {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* Weather details */
+
+        .details-section {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .details-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .detail {
+            background: var(--surface);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 16px;
+            transition: background 0.15s ease;
+        }
+
+        .detail:hover {
+            background: var(--surface-hover);
+        }
+
+        .detail-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 9px;
+        }
+
+        .detail-value {
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        /* Footer */
+
+        .footer {
+            padding: 17px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        /* Mobile */
 
         @media (max-width: 480px) {
             body {
-                padding: 10px;
+                padding: 0;
             }
 
             .container {
-                margin: 10px auto;
+                margin: 0;
             }
 
             .card {
-                padding: 18px;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .search {
+                padding: 15px;
+                gap: 7px;
+            }
+
+            .search button {
+                padding: 12px 17px;
+            }
+
+            .current-weather {
+                padding: 22px 18px;
+            }
+
+            .location h2 {
+                font-size: 22px;
             }
 
             .temperature {
-                font-size: 54px;
+                font-size: 66px;
+            }
+
+            .details-section {
+                padding: 20px 16px;
             }
 
             .details {
@@ -160,15 +308,11 @@
             }
 
             .detail {
-                padding: 12px;
+                padding: 13px;
             }
 
             .detail-value {
-                font-size: 16px;
-            }
-
-            .search button {
-                padding: 12px;
+                font-size: 18px;
             }
         }
     </style>
@@ -177,89 +321,156 @@
 <body>
 
 <div class="container">
+
     <div class="card">
 
-        <h1>Weather</h1>
+        <!-- Header -->
+
+        <div class="header">
+            <div class="logo">☀</div>
+
+            <div>
+                <div class="header-title">Quick Weather</div>
+                <div class="header-subtitle">
+                    Your quick weather information at a glance
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ZIP Search -->
 
         <form class="search" id="searchForm">
+
             <input
                 type="text"
                 id="zipCodeInput"
-                placeholder="Enter ZIP code"
+                placeholder="Search by ZIP code"
                 maxlength="5"
                 inputmode="numeric"
             >
+
             <button type="submit">Search</button>
+
         </form>
+
+
+        <!-- Status -->
 
         <div id="status" class="status">
             Getting weather...
         </div>
 
+
+        <!-- Weather -->
+
         <div id="weather" class="hidden">
 
-            <div class="location">
-                <h2 id="location"></h2>
-                <div id="address" class="address"></div>
-                <div id="coordinates" class="coordinates"></div>
-            </div>
+            <!-- Current Conditions -->
 
-            <div id="temperature" class="temperature"></div>
-            <div id="description" class="description"></div>
+            <div class="current-weather">
 
-            <div class="details">
-
-                <div class="detail">
-                    <div class="detail-label">Feels Like</div>
-                    <div id="feelsLike" class="detail-value"></div>
+                <div class="section-label">
+                    CURRENT CONDITIONS
                 </div>
 
-                <div class="detail">
-                    <div class="detail-label">Humidity</div>
-                    <div id="humidity" class="detail-value"></div>
+                <div class="location">
+
+                    <h2 id="location"></h2>
+
+                    <div id="address" class="address"></div>
+
+                    <div id="coordinates" class="coordinates"></div>
+
                 </div>
 
-                <div class="detail">
-                    <div class="detail-label">Cloud Cover</div>
-                    <div id="cloudCover" class="detail-value"></div>
-                </div>
+                <div class="temperature-row">
 
-                <div class="detail">
-                    <div class="detail-label">Wind Speed</div>
-                    <div id="windSpeed" class="detail-value"></div>
-                </div>
+                    <div id="temperature" class="temperature"></div>
 
-                <div class="detail">
-                    <div class="detail-label">Wind Direction</div>
-                    <div id="windDirection" class="detail-value"></div>
-                </div>
+                    <div class="weather-summary">
 
-                <div class="detail">
-                    <div class="detail-label">Wind Gusts</div>
-                    <div id="windGusts" class="detail-value"></div>
-                </div>
+                        <div id="description" class="description"></div>
 
-                <div class="detail">
-                    <div class="detail-label">Today's High</div>
-                    <div id="highTemperature" class="detail-value"></div>
-                </div>
+                        <div id="feelsLike" class="feels-like"></div>
 
-                <div class="detail">
-                    <div class="detail-label">Today's Low</div>
-                    <div id="lowTemperature" class="detail-value"></div>
-                </div>
+                    </div>
 
-                <div class="detail">
-                    <div class="detail-label">Precipitation Chance</div>
-                    <div id="precipitation" class="detail-value"></div>
                 </div>
 
             </div>
+
+
+            <!-- Weather Details -->
+
+            <div class="details-section">
+
+                <div class="details-title">
+                    Weather details
+                </div>
+
+                <div class="details">
+
+                    <div class="detail">
+                        <div class="detail-label">Humidity</div>
+                        <div id="humidity" class="detail-value"></div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Wind Speed</div>
+                        <div id="windSpeed" class="detail-value"></div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Cloud Cover</div>
+                        <div id="cloudCover" class="detail-value"></div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Wind Direction</div>
+                        <div id="windDirection" class="detail-value"></div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Today's High</div>
+                        <div id="highTemperature" class="detail-value"></div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Today's Low</div>
+                        <div id="lowTemperature" class="detail-value"></div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Precipitation Chance</div>
+                        <div id="precipitation" class="detail-value"></div>
+                    </div>
+
+                    <div class="detail">
+                        <div class="detail-label">Wind Gusts</div>
+                        <div id="windGusts" class="detail-value"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
+
+
+        <!-- Footer -->
+
+        <div class="footer">
+            Weather data powered by Open-Meteo
+        </div>
+
     </div>
+
 </div>
 
+
 <script>
+
     // --------------------------------------------------
     // Determine application path and API base URL
     // --------------------------------------------------
@@ -286,6 +497,7 @@
     // --------------------------------------------------
 
     function showStatus(message, isError = false) {
+
         statusElement.textContent = message;
 
         statusElement.className = isError
@@ -297,17 +509,18 @@
 
 
     function displayWeather(data) {
+
         document.getElementById("location").textContent =
             data.location;
 
         document.getElementById("temperature").textContent =
-            `${Math.round(data.temperature)}°F`;
+            `${Math.round(data.temperature)}°`;
 
         document.getElementById("description").textContent =
             data.description;
 
         document.getElementById("feelsLike").textContent =
-            `${Math.round(data.feels_like)}°F`;
+            `Feels like ${Math.round(data.feels_like)}°F`;
 
         document.getElementById("humidity").textContent =
             `${data.humidity}%`;
@@ -334,16 +547,20 @@
             `${data.precipitation_probability}%`;
 
 
-        // Display GPS address details when available.
+        // Build the GPS address from available components.
+
         const addressParts = [
-            [data.house_number, data.street]
-                .filter(Boolean)
-                .join(" "),
+            [
+                data.house_number,
+                data.street
+            ].filter(Boolean).join(" "),
+
             data.city,
             data.county,
             data.state,
             data.postal_code,
             data.country
+
         ].filter(Boolean);
 
         document.getElementById("address").textContent =
@@ -351,6 +568,7 @@
 
 
         // Display GPS coordinates when available.
+
         const coordinatesElement =
             document.getElementById("coordinates");
 
@@ -374,14 +592,17 @@
     // --------------------------------------------------
 
     async function getWeatherByZip(zipCode) {
+
         showStatus("Getting weather...");
 
         try {
+
             const response = await fetch(
                 `${apiBase}/${encodeURIComponent(zipCode)}`
             );
 
             if (!response.ok) {
+
                 const error = await response.json();
 
                 throw new Error(
@@ -394,6 +615,7 @@
             displayWeather(data);
 
         } catch (error) {
+
             showStatus(error.message, true);
             weatherElement.classList.add("hidden");
         }
@@ -405,14 +627,17 @@
     // --------------------------------------------------
 
     async function getWeather(latitude, longitude) {
+
         showStatus("Getting weather for your location...");
 
         try {
+
             const response = await fetch(
                 `${apiBase}/location?latitude=${latitude}&longitude=${longitude}`
             );
 
             if (!response.ok) {
+
                 const error = await response.json();
 
                 throw new Error(
@@ -429,6 +654,7 @@
             displayWeather(data);
 
         } catch (error) {
+
             showStatus(error.message, true);
             weatherElement.classList.add("hidden");
         }
@@ -440,11 +666,14 @@
     // --------------------------------------------------
 
     function searchByZip(zipCode) {
+
         if (!/^\d{5}$/.test(zipCode)) {
+
             showStatus(
                 "Please enter a valid five-digit ZIP code.",
                 true
             );
+
             return;
         }
 
@@ -457,24 +686,31 @@
     // --------------------------------------------------
 
     function requestGpsLocation() {
+
         if (!navigator.geolocation) {
+
             showStatus(
                 "Your browser does not support GPS location.",
                 true
             );
+
             return;
         }
 
         showStatus("Getting your GPS location...");
 
         navigator.geolocation.getCurrentPosition(
+
             position => {
+
                 getWeather(
                     position.coords.latitude,
                     position.coords.longitude
                 );
             },
+
             handleLocationError,
+
             {
                 enableHighAccuracy: true,
                 timeout: 15000,
@@ -485,9 +721,11 @@
 
 
     function handleLocationError(error) {
+
         let message;
 
         switch (error.code) {
+
             case error.PERMISSION_DENIED:
                 message = "Location permission was denied.";
                 break;
@@ -514,6 +752,7 @@
 
     document.getElementById("searchForm")
         .addEventListener("submit", event => {
+
             event.preventDefault();
 
             const zipCode = document
@@ -536,8 +775,11 @@
             : null;
 
     if (zipCode) {
+
         getWeatherByZip(zipCode);
+
     } else {
+
         requestGpsLocation();
     }
 

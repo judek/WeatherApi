@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Weather</title>
+    <title>Quick Weather</title>
 
     <style>
         :root {
@@ -175,6 +175,12 @@
             color: var(--muted);
             font-size: 11px;
             margin-top: 5px;
+        }
+
+        .last-updated {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 8px;
         }
 
         .temperature-row {
@@ -382,6 +388,8 @@
 
                     <div id="coordinates" class="coordinates"></div>
 
+                    <div id="lastUpdated" class="last-updated"></div>
+
                 </div>
 
                 <div class="temperature-row">
@@ -491,6 +499,12 @@
     const statusElement = document.getElementById("status");
     const weatherElement = document.getElementById("weather");
 
+    const REFRESH_INTERVAL = 15 * 60 * 1000;
+
+    // Holds the current lookup so automatic refresh knows
+    // whether to refresh GPS coordinates or a ZIP code.
+    let refreshHandler = null;
+
 
     // --------------------------------------------------
     // Display helpers
@@ -505,6 +519,23 @@
             : "status";
 
         statusElement.classList.remove("hidden");
+    }
+
+
+    function updateLastUpdated() {
+
+        const now = new Date();
+
+        const formattedDate = new Intl.DateTimeFormat(
+            undefined,
+            {
+                dateStyle: "medium",
+                timeStyle: "short"
+            }
+        ).format(now);
+
+        document.getElementById("lastUpdated").textContent =
+            `Last updated: ${formattedDate}`;
     }
 
 
@@ -582,6 +613,9 @@
             coordinatesElement.textContent = "";
         }
 
+        // Record when this successful response was received.
+        updateLastUpdated();
+
         weatherElement.classList.remove("hidden");
         statusElement.classList.add("hidden");
     }
@@ -593,7 +627,13 @@
 
     async function getWeatherByZip(zipCode) {
 
-        showStatus("Getting weather...");
+        refreshHandler = () => getWeatherByZip(zipCode);
+
+        if (weatherElement.classList.contains("hidden")) {
+            showStatus("Getting weather...");
+        } else {
+            showStatus("Refreshing weather...");
+        }
 
         try {
 
@@ -617,7 +657,6 @@
         } catch (error) {
 
             showStatus(error.message, true);
-            weatherElement.classList.add("hidden");
         }
     }
 
@@ -628,7 +667,13 @@
 
     async function getWeather(latitude, longitude) {
 
-        showStatus("Getting weather for your location...");
+        refreshHandler = () => getWeather(latitude, longitude);
+
+        if (weatherElement.classList.contains("hidden")) {
+            showStatus("Getting weather for your location...");
+        } else {
+            showStatus("Refreshing weather...");
+        }
 
         try {
 
@@ -656,9 +701,24 @@
         } catch (error) {
 
             showStatus(error.message, true);
-            weatherElement.classList.add("hidden");
         }
     }
+
+
+    // --------------------------------------------------
+    // Automatic refresh
+    // --------------------------------------------------
+
+    // Refresh the current location every 15 minutes.
+    // GPS coordinates or ZIP code are retained in refreshHandler.
+
+    setInterval(() => {
+
+        if (refreshHandler) {
+            refreshHandler();
+        }
+
+    }, REFRESH_INTERVAL);
 
 
     // --------------------------------------------------

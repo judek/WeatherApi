@@ -273,6 +273,10 @@ class WeatherService:
                 else location.name
             ),
 
+            # Geographic coordinates for map links.
+            latitude=location.latitude,
+            longitude=location.longitude,
+
             # Reverse-geocoded address details.
             street=(
                 address.get("road")

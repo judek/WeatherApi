@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -254,6 +255,46 @@
             font-weight: bold;
         }
 
+        /* Weather Radar */
+
+        .radar-section {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .radar-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .radar-description {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .radar-link {
+            display: inline-block;
+            background: var(--blue);
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .radar-link:hover {
+            background: var(--blue-hover);
+        }
+
         /* Footer */
 
         .footer {
@@ -319,6 +360,19 @@
 
             .detail-value {
                 font-size: 18px;
+            }
+
+            .radar-section {
+                padding: 20px 16px;
+            }
+
+            .radar-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .radar-link {
+                text-align: center;
             }
         }
     </style>
@@ -463,6 +517,42 @@
 
             </div>
 
+
+            <!-- Weather Radar -->
+
+            <div class="radar-section">
+
+                <div class="details-title">
+                    Weather Radar
+                </div>
+
+                <div class="radar-card">
+
+                    <div>
+                        <div style="font-size: 16px; font-weight: bold; margin-bottom: 6px;">
+                            🌧️ Live Weather Radar
+                        </div>
+
+                        <div class="radar-description">
+                            View rain, storms, and weather systems
+                            around your selected location.
+                        </div>
+                    </div>
+
+                    <a
+                        id="windyLink"
+                        class="radar-link"
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Open in Windy ↗
+                    </a>
+
+                </div>
+
+            </div>
+
         </div>
 
 
@@ -539,6 +629,30 @@
     }
 
 
+    // --------------------------------------------------
+    // Windy radar link
+    // --------------------------------------------------
+
+    function updateWindyLink(data) {
+
+        if (
+            data.latitude === undefined ||
+            data.longitude === undefined ||
+            data.latitude === null ||
+            data.longitude === null
+        ) {
+            return;
+        }
+
+        const zoom = 9;
+
+        const windyUrl =
+            `https://www.windy.com/-Weather-radar-radar?radar,${data.latitude},${data.longitude},${zoom}`;
+
+        document.getElementById("windyLink").href = windyUrl;
+    }
+
+
     function displayWeather(data) {
 
         document.getElementById("location").textContent =
@@ -612,6 +726,9 @@
         } else {
             coordinatesElement.textContent = "";
         }
+
+        // Update the Windy radar link for this location.
+        updateWindyLink(data);
 
         // Record when this successful response was received.
         updateLastUpdated();

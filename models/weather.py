@@ -1,10 +1,13 @@
-
 from pydantic import BaseModel
 
 
 class WeatherResponse(BaseModel):
     zip_code: str
     location: str
+
+    # Geographic coordinates
+    latitude: float | None = None
+    longitude: float | None = None
 
     # Reverse-geocoded address details (GPS lookups).
     street: str | None = None

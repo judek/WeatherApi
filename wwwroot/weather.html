@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,8 +45,6 @@
             overflow: hidden;
         }
 
-        /* Header */
-
         .header {
             display: flex;
             align-items: center;
@@ -77,8 +74,6 @@
             font-size: 12px;
             margin-top: 3px;
         }
-
-        /* Search */
 
         .search {
             display: flex;
@@ -122,8 +117,6 @@
             background: var(--blue-hover);
         }
 
-        /* Status */
-
         .status {
             text-align: center;
             color: var(--muted);
@@ -138,8 +131,6 @@
         .hidden {
             display: none !important;
         }
-
-        /* Current weather */
 
         .current-weather {
             padding: 25px 24px;
@@ -184,6 +175,37 @@
             margin-top: 8px;
         }
 
+        .last-updated-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .last-updated-row .last-updated {
+            margin-top: 0;
+        }
+
+        .refresh-button {
+            background: transparent;
+            color: var(--blue);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .refresh-button:hover {
+            background: var(--surface-hover);
+        }
+
+        .refresh-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .temperature-row {
             display: flex;
             align-items: center;
@@ -212,8 +234,6 @@
             color: var(--muted);
             font-size: 13px;
         }
-
-        /* Weather details */
 
         .details-section {
             padding: 22px 24px;
@@ -255,8 +275,6 @@
             font-weight: bold;
         }
 
-        /* Weather Radar */
-
         .radar-section {
             padding: 22px 24px;
             border-bottom: 1px solid var(--border);
@@ -295,16 +313,12 @@
             background: var(--blue-hover);
         }
 
-        /* Footer */
-
         .footer {
             padding: 17px;
             text-align: center;
             color: var(--muted);
             font-size: 11px;
         }
-
-        /* Mobile */
 
         @media (max-width: 480px) {
             body {
@@ -384,8 +398,6 @@
 
     <div class="card">
 
-        <!-- Header -->
-
         <div class="header">
             <div class="logo">☀</div>
 
@@ -396,9 +408,6 @@
                 </div>
             </div>
         </div>
-
-
-        <!-- ZIP Search -->
 
         <form class="search" id="searchForm">
 
@@ -414,19 +423,11 @@
 
         </form>
 
-
-        <!-- Status -->
-
         <div id="status" class="status">
             Getting weather...
         </div>
 
-
-        <!-- Weather -->
-
         <div id="weather" class="hidden">
-
-            <!-- Current Conditions -->
 
             <div class="current-weather">
 
@@ -442,7 +443,17 @@
 
                     <div id="coordinates" class="coordinates"></div>
 
-                    <div id="lastUpdated" class="last-updated"></div>
+                    <div class="last-updated-row">
+                        <div id="lastUpdated" class="last-updated"></div>
+
+                        <button
+                            type="button"
+                            id="refreshButton"
+                            class="refresh-button"
+                        >
+                            ↻ Refresh Now
+                        </button>
+                    </div>
 
                 </div>
 
@@ -461,9 +472,6 @@
                 </div>
 
             </div>
-
-
-            <!-- Weather Details -->
 
             <div class="details-section">
 
@@ -517,9 +525,6 @@
 
             </div>
 
-
-            <!-- Weather Radar -->
-
             <div class="radar-section">
 
                 <div class="details-title">
@@ -555,9 +560,6 @@
 
         </div>
 
-
-        <!-- Footer -->
-
         <div class="footer">
             Weather data powered by Open-Meteo
         </div>
@@ -566,12 +568,9 @@
 
 </div>
 
-
 <script>
 
-    // --------------------------------------------------
-    // Determine application path and API base URL
-    // --------------------------------------------------
+    // Determine application path and API base URL.
 
     const pathParts = window.location.pathname
         .split("/")
@@ -588,12 +587,16 @@
 
     const statusElement = document.getElementById("status");
     const weatherElement = document.getElementById("weather");
+    const refreshButton = document.getElementById("refreshButton");
 
     const REFRESH_INTERVAL = 15 * 60 * 1000;
 
-    // Holds the current lookup so automatic refresh knows
-    // whether to refresh GPS coordinates or a ZIP code.
+    // Current lookup handler.
+    // ZIP mode retains its ZIP code.
+    // GPS mode reacquires the current position.
+
     let refreshHandler = null;
+    let isRefreshing = false;
 
 
     // --------------------------------------------------
@@ -609,6 +612,13 @@
             : "status";
 
         statusElement.classList.remove("hidden");
+    }
+
+
+    function setRefreshing(value) {
+
+        isRefreshing = value;
+        refreshButton.disabled = value;
     }
 
 
@@ -653,6 +663,10 @@
     }
 
 
+    // --------------------------------------------------
+    // Display weather data
+    // --------------------------------------------------
+
     function displayWeather(data) {
 
         document.getElementById("location").textContent =
@@ -692,8 +706,6 @@
             `${data.precipitation_probability}%`;
 
 
-        // Build the GPS address from available components.
-
         const addressParts = [
             [
                 data.house_number,
@@ -712,8 +724,6 @@
             addressParts.join(", ");
 
 
-        // Display GPS coordinates when available.
-
         const coordinatesElement =
             document.getElementById("coordinates");
 
@@ -727,10 +737,7 @@
             coordinatesElement.textContent = "";
         }
 
-        // Update the Windy radar link for this location.
         updateWindyLink(data);
-
-        // Record when this successful response was received.
         updateLastUpdated();
 
         weatherElement.classList.remove("hidden");
@@ -744,7 +751,14 @@
 
     async function getWeatherByZip(zipCode) {
 
+        // Keep the current lookup in ZIP mode.
         refreshHandler = () => getWeatherByZip(zipCode);
+
+        if (isRefreshing) {
+            return;
+        }
+
+        setRefreshing(true);
 
         if (weatherElement.classList.contains("hidden")) {
             showStatus("Getting weather...");
@@ -774,6 +788,10 @@
         } catch (error) {
 
             showStatus(error.message, true);
+
+        } finally {
+
+            setRefreshing(false);
         }
     }
 
@@ -784,7 +802,14 @@
 
     async function getWeather(latitude, longitude) {
 
-        refreshHandler = () => getWeather(latitude, longitude);
+        // Do not set refreshHandler here.
+        // GPS refresh must reacquire the position first.
+
+        if (isRefreshing) {
+            return;
+        }
+
+        setRefreshing(true);
 
         if (weatherElement.classList.contains("hidden")) {
             showStatus("Getting weather for your location...");
@@ -818,6 +843,10 @@
         } catch (error) {
 
             showStatus(error.message, true);
+
+        } finally {
+
+            setRefreshing(false);
         }
     }
 
@@ -826,12 +855,9 @@
     // Automatic refresh
     // --------------------------------------------------
 
-    // Refresh the current location every 15 minutes.
-    // GPS coordinates or ZIP code are retained in refreshHandler.
-
     setInterval(() => {
 
-        if (refreshHandler) {
+        if (refreshHandler && !isRefreshing) {
             refreshHandler();
         }
 
@@ -864,6 +890,13 @@
 
     function requestGpsLocation() {
 
+        // Keep GPS mode for manual and automatic refresh.
+        refreshHandler = requestGpsLocation;
+
+        if (isRefreshing) {
+            return;
+        }
+
         if (!navigator.geolocation) {
 
             showStatus(
@@ -876,6 +909,9 @@
 
         showStatus("Getting your GPS location...");
 
+        // Do not set isRefreshing here.
+        // getWeather() manages that state after GPS returns.
+
         navigator.geolocation.getCurrentPosition(
 
             position => {
@@ -886,12 +922,15 @@
                 );
             },
 
-            handleLocationError,
+            error => {
+
+                handleLocationError(error);
+            },
 
             {
                 enableHighAccuracy: true,
                 timeout: 15000,
-                maximumAge: 300000
+                maximumAge: 0
             }
         );
     }
@@ -921,6 +960,19 @@
 
         showStatus(message, true);
     }
+
+
+    // --------------------------------------------------
+    // Refresh Now button
+    // --------------------------------------------------
+
+    refreshButton.addEventListener("click", () => {
+
+        if (refreshHandler && !isRefreshing) {
+            refreshHandler();
+        }
+
+    });
 
 
     // --------------------------------------------------

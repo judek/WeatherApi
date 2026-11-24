@@ -78,3 +78,6 @@ Desktop.ini
 # ==========================================
 *.tmp
 *.bak
+
+# Azure Functions local settings
+local.settings.json

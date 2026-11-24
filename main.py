@@ -14,6 +14,7 @@ from services.weather_service import (
 
 
 app = FastAPI(title="Weather API")
+WEATHER_HTML = FilePath(__file__).resolve().parent / "wwwroot" / "weather.html"
 
 
 # Dependency injection
@@ -37,7 +38,7 @@ async def root():
 @app.get("/weather", include_in_schema=False)
 @app.get("/weather/", include_in_schema=False)
 async def weather_page():
-    return FileResponse(FilePath("wwwroot/weather.html"))
+    return FileResponse(WEATHER_HTML)
 
 
 @app.get("/weather/{zip_code}", include_in_schema=False)
@@ -50,7 +51,7 @@ async def weather_page_by_zip(
             detail="Invalid ZIP code"
         )
 
-    return FileResponse(FilePath("wwwroot/weather.html"))
+    return FileResponse(WEATHER_HTML)
 
 
 # --------------------------------------------------
